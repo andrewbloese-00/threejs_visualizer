@@ -122,7 +122,8 @@ async function init(){
     //reposition and scale according to volume at current frequency bin
     for(let i = 0; i < frequencyData.length; i++){
       let theta = i+frame/frequencyData.length * 2*Math.PI
-      let z = r * Math.sin(theta)
+      // let rad = frequencyData[i]
+      let z = r* Math.sin(theta)
       let x = r * Math.cos(theta)
 
       columns[i].position.set(x,0,z)
@@ -158,10 +159,14 @@ window.addEventListener("DOMContentLoaded",()=>{
   const perspectiveButton = document.querySelector("#perspectiveButton")
   //perspective can be 1 or 0
   let perspective = false
-  
+  window.addEventListener("keypress",e=>{
+    if(e.key === "v" || e.key === "V"){
+      perspectiveButton.click()
+    }
+  })
   activator.addEventListener("click",async ()=>{
-    const {camera} = await init(); 
     activator.remove()
+    await init(); 
     
     perspectiveButton.addEventListener("click",(e)=>{
       if(perspective){
@@ -172,11 +177,6 @@ window.addEventListener("DOMContentLoaded",()=>{
         camera.lookAt(0,50,0)  
       }
       perspective = !perspective
-    })
-    window.addEventListener("keypress",e=>{
-      if(e.key === "v" || e.key === "V"){
-        perspectiveButton.click()
-      }
     })
   })
 
