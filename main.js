@@ -136,8 +136,6 @@ async function init(){
 
   }
 
-  return {camera}
-
 }
 
 /**
