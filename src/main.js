@@ -1,44 +1,64 @@
-import './style.css'
-import { PerspectiveCamera , PlaneGeometry, CylinderGeometry, Scene, WebGLRenderer, Mesh, MeshBasicMaterial, DoubleSide, Vector3 } from "three"
+/**
+ * Author: Andrew Bloese , November 2023
+ */
 
-const BASS_LOW_HZ = 20;
-const BASS_HIGH_HZ = 250;
-const TREBLE_LOW_HZ = 2000;
-const TREBLE_HIGH_HZ = 20000;
-const SPIN_SPEED = 2
-const r = 50;
-const camera = new PerspectiveCamera(65,window.innerWidth/window.innerHeight,0.1,1000)
+import '../style.css'
+import { 
+  PerspectiveCamera, Scene, WebGLRenderer,
+  Mesh,CylinderGeometry, MeshBasicMaterial,
+  DoubleSide, Vector3 
+} from "three"
+import { 
+  BASS_LOW_HZ, BASS_HIGH_HZ, TREBLE_HIGH_HZ , TREBLE_LOW_HZ ,
+   SPIN_SPEED, FFT_SIZE, PERSPECTIVES, CONTROLS,
+   CENTRAL_RADIUS as r, COLORS as colors
+} from './constants';
+
+
+//need global access to camera for use in toggle perspective
+const camera = new PerspectiveCamera(75,window.innerWidth/window.innerHeight,0.1,1000)
+
+//state
+let isFullscreen = false;
+let frequencyData = new Uint8Array(FFT_SIZE/2);
+let perspective = 0;
+let frame = 0;
 
 //messy af need to come back and clean this shit up sometime
 async function init(){
-  let frame = 0;
   let columns = []
-  let colors = ["#ff0000", "#00ff00", "#0000ff", "#ffff00", "#ff00ff", "#00ffff"]
 
+  //initialize audio context and analyser
   const audioContext = new AudioContext();
-  const analyser = audioContext.createAnalyser()
-  analyser.fftSize = 2048
-  let frequencyData = new Uint8Array(analyser.frequencyBinCount)
-  const scene = new Scene()
-  const renderer = new WebGLRenderer()
-  document.body.appendChild(renderer.domElement)
+  const analyser = audioContext.createAnalyser();
+  analyser.fftSize = FFT_SIZE;
+
+  //threejs scene setup 
+  const scene = new Scene();
+  const renderer = new WebGLRenderer();
+  document.body.appendChild(renderer.domElement);
+  /**
+   * @about a helper function to correct camera and renderer on window resize
+   */
   function onResize(){
     renderer.setSize(window.innerWidth,window.innerHeight,true)
     camera.updateProjectionMatrix();
   }
 
-  camera.position.set(40,30,0)
-  // camera.position.set(100,150,100)
+  camera.position.set(...PERSPECTIVES[perspective].cameraConfig.position)
   camera.lookAt(new Vector3(0,30,0))
   window.addEventListener("resize",onResize)
-  onResize()
+  onResize() //set the size initially
   const { stream , error } = await getMicrophoneStream()
+  //stop if there was an error getting microphone
   if(error) return 
   const audioSource = audioContext.createMediaStreamSource(stream)
-  audioSource.connect(analyser)
+  audioSource.connect(analyser);
 
-  buildColumns()
-  animate()
+  buildColumns();
+  animate();
+
+
 
   function hzToFrequencyBin(lowHz, highHz){
     const div = audioContext.sampleRate/analyser.fftSize
@@ -50,12 +70,12 @@ async function init(){
 
   /**
    * @about calculates the average bass/treble volume, as well as the bin and volume of the loudest bass and treble frequencies
-   * @returns {{avgs: {bass:number, treble:number}, maxBass:number, maxTreble:number}}
+   * @returns {{avgs: {bass:number, treble:number}, maxBass:{idx:number,val:number}, maxTreble:{idx:number,val:number}}}
    */
   function getBassAndTrebleStats() {
     const bassBounds = hzToFrequencyBin(BASS_LOW_HZ,BASS_HIGH_HZ)
-    const trebleBounds = hzToFrequencyBin(TREBLE_LOW_HZ,TREBLE_LOW_HZ);
-    let sumTreble = 0, sumBass = 0, maxBass = {idx:0,val:0}, maxTreble = {idx:0,val:0};
+    const trebleBounds = hzToFrequencyBin(TREBLE_LOW_HZ,TREBLE_HIGH_HZ);
+    let sumTreble = 0,     sumBass = 0, maxBass = {idx:0,val:0}, maxTreble = {idx:0,val:0};
     for(let b = bassBounds.start; b <= bassBounds.end; b++){
         sumBass += frequencyData[b]
         if(frequencyData[b] > maxBass.val) {
@@ -80,6 +100,7 @@ async function init(){
     }
   }
 
+
   //build the columns each at a distance of  "r" from the origin
   function buildColumns(){
     //iterate through each of the frequency bins
@@ -96,7 +117,7 @@ async function init(){
       )
       //position the column
       let theta = i/frequencyData.length * 2*Math.PI 
-      let rad = frequencyData[i]
+      let rad = binColor / colors.length * 50
       let z = rad * Math.sin(theta)
       let x = rad * Math.cos(theta)
 
@@ -112,29 +133,32 @@ async function init(){
 
   }
 
+
+  //animation loop
   function animate(){
     frame+=SPIN_SPEED;
     analyser.getByteFrequencyData(frequencyData);
-
-    // const stats = getBassAndTrebleStats();
     //TODO  add another shape that changes based on average bass / treb using 'stats'
 
     //reposition and scale according to volume at current frequency bin
     for(let i = 0; i < frequencyData.length; i++){
       let theta = i+frame/frequencyData.length * 2*Math.PI
-      // let rad = frequencyData[i]
-      let z = r* Math.sin(theta)
-      let x = r * Math.cos(theta)
+      let c = (Math.floor(i / frequencyData.length * (colors.length)))
+      
+
+      let z = (r-2*c) * Math.sin(theta)
+      let x = (r-2*c) * Math.cos(theta)
 
       columns[i].position.set(x,0,z)
       columns[i].position.y += frequencyData[i]/255*100/2
       columns[i].scale.y = frequencyData[i]/255*80
     }
     renderer.render(scene,camera)
+    //60 frames per second 
     setTimeout(()=>{
       requestAnimationFrame(animate)
     },60/1000)
-
+    colors.reverse()
   }
 
 }
@@ -155,29 +179,51 @@ async function getMicrophoneStream(){
 
 
 window.addEventListener("DOMContentLoaded",()=>{
+  const title = document.querySelector("#title")
+  const disclaimer = document.querySelector("#disclaimer")
   const activator = document.querySelector("#startBtn")
+  // const detector = document.querySelector("#shazamBtn")
   const perspectiveButton = document.querySelector("#perspectiveButton")
-  //perspective can be 1 or 0
-  let perspective = false
   window.addEventListener("keypress",e=>{
-    if(e.key === "v" || e.key === "V"){
+    let key = e.key.toLowerCase();
+    //toggle perspective
+    if(key === CONTROLS.toggle_view){
       perspectiveButton.click()
+    }
+    //toggle fullscreen
+    else if(key === CONTROLS.toggle_fullscreen){
+      if(!isFullscreen){
+        document.body.requestFullscreen()  
+        isFullscreen = true
+      } else { 
+        document.exitFullscreen && document.exitFullscreen()
+        isFullscreen = false
+      }
     }
   })
   activator.addEventListener("click",async ()=>{
-    activator.remove()
+    disclaimer.remove()
+    activator.remove();
+    title.remove();
     await init(); 
     
-    perspectiveButton.addEventListener("click",(e)=>{
-      if(perspective){
-        camera.position.set(40,30,0);
-        camera.lookAt(0,30,0)
-      } else { 
-        camera.position.set(100,150,100)
-        camera.lookAt(0,50,0)  
+    //toggle perspective with a button click
+    perspectiveButton.addEventListener("click",()=>{
+      perspective++;
+      if(perspective > PERSPECTIVES.length-1){
+        perspective = 0;
       }
-      perspective = !perspective
+      const position = PERSPECTIVES[perspective].cameraConfig.position;
+      camera.position.set(...position);
+      camera.lookAt(PERSPECTIVES[perspective].cameraConfig.look);
+      perspectiveButton.textContent = PERSPECTIVES[perspective].icon;
     })
-  })
 
+
+  })
 })
+
+
+
+
+

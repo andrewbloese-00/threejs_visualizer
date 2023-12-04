@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+shazam_integration.js
+src/shazam-core.js
+main_fileviz.js
