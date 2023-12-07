@@ -107,6 +107,9 @@ async function init(){
     for(let i = 0; i <= frequencyData.length; i++){
       //calculate the appropriate color based on the bin we are currently building
       let binColor = Math.floor(i / frequencyData.length * (colors.length-1))
+      if(binColor === colors.length-1){
+        continue
+      }
       let column = new Mesh(
         new CylinderGeometry(1,5,1),
         new MeshBasicMaterial({
@@ -141,7 +144,7 @@ async function init(){
     //TODO  add another shape that changes based on average bass / treb using 'stats'
 
     //reposition and scale according to volume at current frequency bin
-    for(let i = 0; i < frequencyData.length; i++){
+    for(let i = 0; i < columns.length; i++){
       let theta = i+frame/frequencyData.length * 2*Math.PI
       let c = (Math.floor(i / frequencyData.length * (colors.length)))
       
