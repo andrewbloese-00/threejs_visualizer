@@ -6,12 +6,14 @@ Andrew Bloese - December 2023
 
 ## Important Notes 
 If you want to record the speaker output from your computer, use Google Chrome. Facing difficulties with safari if the audio being played is coming from the same device. Overall this application runs best on Google Chrome. 
+[Link To Demo](https://beat-valley-visualizer.web.app)
+   
 
 ## Technologies Used
 1. Vite - build tool
 2. ThreeJS - to create and render 3D shapes in the browser
 3. Web Audio APIs - using web native audio APIs to access the user's microphone stream with permission as well as performing FFT Analysis of the microphone stream.
-4. Firebase Hosting - this project will soon have a live demo hosted on firebase, check the readme later for a link to the demo (I'm not done yet lol)
+4. Firebase Hosting - demo hosted on firebase [Check It Out](https://beat-valley-visualizer.web.app)
    
 
 ## Run Locally
