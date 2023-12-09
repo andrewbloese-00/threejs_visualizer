@@ -23,10 +23,12 @@ let isFullscreen = false;
 let frequencyData = new Uint8Array(FFT_SIZE/2);
 let perspective = 0;
 let frame = 0;
+let needsRecolor = Array(colors.length).fill(false), coloring;
+let columns = []
+
 
 //messy af need to come back and clean this shit up sometime
 async function init(){
-  let columns = []
 
   //initialize audio context and analyser
   const audioContext = new AudioContext();
@@ -126,16 +128,15 @@ async function init(){
 
       column.position.set(x,0,z)
       //store column for easy access in "animate" function
-      columns[i] = column
+      columns[i] = {column,c:binColor};
       //add the column to the scene
-      scene.add(columns[i])
+      scene.add(columns[i].column)
       //initial render
       renderer.render(scene,camera)
 
     }
 
   }
-
 
   //animation loop
   function animate(){
@@ -147,14 +148,11 @@ async function init(){
     for(let i = 0; i < columns.length; i++){
       let theta = i+frame/frequencyData.length * 2*Math.PI
       let c = (Math.floor(i / frequencyData.length * (colors.length)))
-      
-
       let z = (r-2*c) * Math.sin(theta)
       let x = (r-2*c) * Math.cos(theta)
-
-      columns[i].position.set(x,0,z)
-      columns[i].position.y += frequencyData[i]/255*100/2
-      columns[i].scale.y = frequencyData[i]/255*80
+      columns[i].column.position.set(x,0,z)
+      columns[i].column.position.y += frequencyData[i]/255*100/2
+      columns[i].column.scale.y = frequencyData[i]/255*80
     }
     renderer.render(scene,camera)
     //60 frames per second 
@@ -224,6 +222,32 @@ window.addEventListener("DOMContentLoaded",()=>{
 
 
   })
+
+  const colorOptionsWrapper = document.querySelector("#colorOptions");
+  let hidden = true;
+
+  document.querySelector("#toggleColorMenu").addEventListener("click",()=>{
+    colorOptionsWrapper.style.height = hidden ? "fit-content" : "0px"
+    hidden = !hidden;
+  })
+
+  document.querySelectorAll(".coloroption").forEach(optionInput=>{
+    const c = parseInt(optionInput.id.split("_").pop());
+
+    optionInput.addEventListener("change",()=>{
+      colors[c] = optionInput.value;
+      for(let i = 0; i < columns.length; i++){
+        if(columns[i].c === c){
+          columns[i].column.material.color.set(colors[c])
+        }
+      }    
+          
+          
+      
+    }) 
+  })
+
+
 })
 
 
