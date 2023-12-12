@@ -27,6 +27,7 @@
     <div id="color-menu">
       <button id="toggleColorMenu">🎨</button>
       <section id="colorOptions">
+          <h2>Color Selector</h2>
           <div class="form-group">
             <label for="color_0">Low Color</label>
             <input class="coloroption" type="color" id="color_0" value="#ff0000"/>
@@ -47,10 +48,26 @@
             <label for="color_4">High Color</label>
             <input class="coloroption" type="color" id="color_4" value="#ff00ff"/>
           </div>
+          <button id="save_theme">
+            Save Theme
+          </button>
+          <h2 style="padding: 10px;">Saved Themes</h2>
+          <section id="saved_colors">
+          </section>
+          
+        </section>
+      </div>
+      
+      <section id="theme_save_modal">
+        <div class="form-group-2">
+          <label for="theme_name">Name</label>
+          <input type="text" id="theme_name" name="theme_name" placeholder="MyColors"/>
+        </div>
+        <button id="save_theme_btn">Save Theme</button>
+      </div>
 
-      </section>
-    </div>
 
+    </section>
 
     <!-- <button id="shazamBtn">Detect Song</button> -->
 

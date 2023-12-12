@@ -222,15 +222,128 @@ window.addEventListener("DOMContentLoaded",()=>{
 
 
   })
+  const savedThemesWrapper = document.querySelector("#saved_colors");
+  //retrieve saved themes from localstorage
+  const storedThemes = localStorage.getItem("savedThemes");
+
+
+
+  if(!storedThemes){
+    savedThemesWrapper.innerHTML = `<p id="empty_msg">Saved Themes will show up here!</p>`
+  } else { 
+    const themes = JSON.parse(storedThemes)
+    for(let t = 0; t < themes.length; t++) {
+      const toggler = document.createElement("button")
+      const deletor = document.createElement("button")
+      const parent = document.createElement('div')
+      parent.className="theme-option"
+     
+      deletor.textContent = "❌"
+      deletor.addEventListener("click", () => {
+        themes.splice(t,1);
+        localStorage.setItem("savedThemes", JSON.stringify(themes));
+        parent.remove()
+
+      })
+
+      toggler.textContent = themes[t].name
+      toggler.addEventListener("click", () => {
+        for(let c = 0; c < colors.length; c++) {
+          colors[c] = themes[t].colors[c];
+        }
+        for(let i = 0; i < columns.length; i++ ){
+          let c = (Math.floor(i / frequencyData.length * (colors.length)))
+          columns[i].column.material.color.set(colors[c])
+        }
+      })
+
+      parent.appendChild(toggler);
+      parent.appendChild(deletor);
+      savedThemesWrapper.appendChild(parent)
+    } 
+  }
+
+
+  const titleModal = document.querySelector("#theme_save_modal")
+  titleModal.style.display = "none"
+  document.querySelector("#save_theme").addEventListener("click", ()=>{
+    titleModal.style.display = "flex"
+  })
+  document.querySelector("#save_theme_btn").addEventListener("click",()=>{
+    /**
+     * @type {HTMLInputElement}
+     */
+    const titleInput = document.querySelector("#theme_name");
+    const theme = {
+      name: titleInput.value,
+      colors
+    } 
+
+    let hasThemes = localStorage.getItem("savedThemes")
+    if(!hasThemes){
+      localStorage.setItem("savedThemes",JSON.stringify([theme]))
+      document.querySelector("#empty_msg").remove()
+    } else { 
+      let current = JSON.parse(hasThemes)
+      localStorage.setItem("savedThemes", JSON.stringify(current));
+      
+    }
+
+    //add to the theme list
+    RenderThemeOption(theme)
+    titleModal.style.display = "none"
+
+  })
+
+  function RenderThemeOption(props){
+    const parent = document.createElement('div')
+    parent.className="theme-option"
+    const toggler = document.createElement('button')
+    const deletor = document.createElement('button')
+    toggler.textContent = props.name || "unknown";
+    deletor.textContent = "❌"
+
+    toggler.addEventListener("click",()=>{
+      for(let c = 0; c < colors.length; c++) {
+        colors[c] = themes[t].colors[c];
+      }
+      for(let i = 0; i < columns.length; i++ ){
+        let c = (Math.floor(i / frequencyData.length * (colors.length)))
+        columns[i].column.material.color.set(colors[c])
+      }
+
+    })
+
+
+    deletor.addEventListener('click',()=>{
+      let savedThemes = localStorage.getItem("savedThemes")
+      if(!savedThemes) return; 
+      const current = JSON.parse(savedThemes).filter(theme=>theme.name !== props.name)
+      localStorage.setItem("savedThemes", JSON.stringify(current));
+      parent.remove();
+    })
+
+    parent.appendChild(toggler)
+    parent.appendChild(deletor)
+    savedThemesWrapper.appendChild(parent);
+
+
+
+  }
+
+
+
 
   const colorOptionsWrapper = document.querySelector("#colorOptions");
   let hidden = true;
 
+  //toggle the visibility of color menu
   document.querySelector("#toggleColorMenu").addEventListener("click",()=>{
     colorOptionsWrapper.style.height = hidden ? "fit-content" : "0px"
     hidden = !hidden;
   })
 
+  //change color of columns as user changes the color input field values
   document.querySelectorAll(".coloroption").forEach(optionInput=>{
     const c = parseInt(optionInput.id.split("_").pop());
 
@@ -246,6 +359,8 @@ window.addEventListener("DOMContentLoaded",()=>{
       
     }) 
   })
+
+
 
 
 })

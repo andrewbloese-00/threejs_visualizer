@@ -92,12 +92,16 @@ h1 {
   background-color: rgba(0, 0, 0, 0.8);
   width: 100%;
   height: 0px;
-  padding: 5px;
+  padding: 0 5px;
   border-radius: 10px;
   overflow: hidden;
   transition: all 0.5s ease;
 }
 
+#colorOptions h2, p  { 
+  padding: 10px;
+  margin-bottom: 0px;
+}
 .logo {
   height: 6em;
   padding: 1.5em;
@@ -222,4 +226,42 @@ canvas {
   #startBtn {
     font-size: 1.2rem;
   }
+}
+
+#theme_save_modal { 
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%,-50%);
+  padding: 30px;
+  z-index: 100;
+
+  
+  
+  display: flex;
+  flex-direction: column;
+  display: grid;
+  place-items: center;
+  background-color: #000;
+}
+
+.form-group-2 { 
+  display: flex; flex-direction: column;
+  align-items: flex-start;
+}
+
+.theme-option { 
+  display: grid;
+  grid-template-columns: 1fr 50px;
+  gap: 10px;
+  background-color: #1a1a1a;
+  place-items: center;
+  margin-bottom: 2rem;
+}
+.theme-option button { 
+  background-color: transparent;
+  border-radius: 0;
+  width: 100%;
+  text-align: left;
+
 }
