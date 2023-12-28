@@ -16,20 +16,20 @@ import {
 
 
 //need global access to camera for use in toggle perspective
-const camera = new PerspectiveCamera(75,window.innerWidth/window.innerHeight,0.1,1000)
+const camera = new PerspectiveCamera(75,window.innerWidth/window.innerHeight,30,1000)
 
 //state
 let isFullscreen = false;
 let frequencyData = new Uint8Array(FFT_SIZE/2);
-let perspective = 0;
+let perspective = 2;
 let frame = 0;
-let needsRecolor = Array(colors.length).fill(false), coloring;
+let rMod = 0;
+
 let columns = []
 
 
 //messy af need to come back and clean this shit up sometime
 async function init(){
-
   //initialize audio context and analyser
   const audioContext = new AudioContext();
   const analyser = audioContext.createAnalyser();
@@ -110,19 +110,19 @@ async function init(){
       //calculate the appropriate color based on the bin we are currently building
       let binColor = Math.floor(i / frequencyData.length * (colors.length-1))
       if(binColor === colors.length-1){
-        continue
+        break;
       }
       let column = new Mesh(
         new CylinderGeometry(1,5,1),
         new MeshBasicMaterial({
           color: colors[binColor],
-          wireframe: true,
+          wireframe: false,
           side: DoubleSide
         })
       )
       //position the column
       let theta = i/frequencyData.length * 2*Math.PI 
-      let rad = binColor / colors.length * 50
+      let rad = binColor / colors.length * 100
       let z = rad * Math.sin(theta)
       let x = rad * Math.cos(theta)
 
@@ -148,14 +148,20 @@ async function init(){
     for(let i = 0; i < columns.length; i++){
       let theta = i+frame/frequencyData.length * 2*Math.PI
       let c = (Math.floor(i / frequencyData.length * (colors.length)))
-      let z = (r-2*c) * Math.sin(theta)
-      let x = (r-2*c) * Math.cos(theta)
+      let mAmt = 10*Math.sin(rMod/40000)+15
+      if (mAmt === 0) mAmt += 1
+      let z = (r-mAmt*c) * Math.sin(theta)
+      let x = ((r-mAmt*c)) * Math.cos(theta)
+      rMod++;
       columns[i].column.position.set(x,0,z)
+      let ratio = frequencyData[i]/255
       columns[i].column.position.y += frequencyData[i]/255*100/2
-      columns[i].column.scale.y = frequencyData[i]/255*80
+      columns[i].column.scale.set(0.3+ratio,  frequencyData[i]/255*80,0.3+ratio)
+      if(frequencyData[i] == 0) {
+        columns[i].column.scale.set(0.1,0.1,0.1)
+      }
     }
     renderer.render(scene,camera)
-    //60 frames per second 
     setTimeout(()=>{
       requestAnimationFrame(animate)
     },60/1000)
@@ -180,11 +186,11 @@ async function getMicrophoneStream(){
 
 
 window.addEventListener("DOMContentLoaded",()=>{
-  const title = document.querySelector("#title")
-  const disclaimer = document.querySelector("#disclaimer")
-  const activator = document.querySelector("#startBtn")
-  // const detector = document.querySelector("#shazamBtn")
-  const perspectiveButton = document.querySelector("#perspectiveButton")
+  const title = document.querySelector("#title");
+  const disclaimer = document.querySelector("#disclaimer");
+  const activator = document.querySelector("#startBtn");
+  const perspectiveButton = document.querySelector("#perspectiveButton");
+
   window.addEventListener("keypress",e=>{
     let key = e.key.toLowerCase();
     //toggle perspective
@@ -222,116 +228,6 @@ window.addEventListener("DOMContentLoaded",()=>{
 
 
   })
-  const savedThemesWrapper = document.querySelector("#saved_colors");
-  //retrieve saved themes from localstorage
-  const storedThemes = localStorage.getItem("savedThemes");
-
-
-
-  if(!storedThemes){
-    savedThemesWrapper.innerHTML = `<p id="empty_msg">Saved Themes will show up here!</p>`
-  } else { 
-    const themes = JSON.parse(storedThemes)
-    for(let t = 0; t < themes.length; t++) {
-      const toggler = document.createElement("button")
-      const deletor = document.createElement("button")
-      const parent = document.createElement('div')
-      parent.className="theme-option"
-     
-      deletor.textContent = "❌"
-      deletor.addEventListener("click", () => {
-        themes.splice(t,1);
-        localStorage.setItem("savedThemes", JSON.stringify(themes));
-        parent.remove()
-
-      })
-
-      toggler.textContent = themes[t].name
-      toggler.addEventListener("click", () => {
-        for(let c = 0; c < colors.length; c++) {
-          colors[c] = themes[t].colors[c];
-        }
-        for(let i = 0; i < columns.length; i++ ){
-          let c = (Math.floor(i / frequencyData.length * (colors.length)))
-          columns[i].column.material.color.set(colors[c])
-        }
-      })
-
-      parent.appendChild(toggler);
-      parent.appendChild(deletor);
-      savedThemesWrapper.appendChild(parent)
-    } 
-  }
-
-
-  const titleModal = document.querySelector("#theme_save_modal")
-  titleModal.style.display = "none"
-  document.querySelector("#save_theme").addEventListener("click", ()=>{
-    titleModal.style.display = "flex"
-  })
-  document.querySelector("#save_theme_btn").addEventListener("click",()=>{
-    /**
-     * @type {HTMLInputElement}
-     */
-    const titleInput = document.querySelector("#theme_name");
-    const theme = {
-      name: titleInput.value,
-      colors
-    } 
-
-    let hasThemes = localStorage.getItem("savedThemes")
-    if(!hasThemes){
-      localStorage.setItem("savedThemes",JSON.stringify([theme]))
-      document.querySelector("#empty_msg").remove()
-    } else { 
-      let current = JSON.parse(hasThemes)
-      localStorage.setItem("savedThemes", JSON.stringify(current));
-      
-    }
-
-    //add to the theme list
-    RenderThemeOption(theme)
-    titleModal.style.display = "none"
-
-  })
-
-  function RenderThemeOption(props){
-    const parent = document.createElement('div')
-    parent.className="theme-option"
-    const toggler = document.createElement('button')
-    const deletor = document.createElement('button')
-    toggler.textContent = props.name || "unknown";
-    deletor.textContent = "❌"
-
-    toggler.addEventListener("click",()=>{
-      for(let c = 0; c < colors.length; c++) {
-        colors[c] = themes[t].colors[c];
-      }
-      for(let i = 0; i < columns.length; i++ ){
-        let c = (Math.floor(i / frequencyData.length * (colors.length)))
-        columns[i].column.material.color.set(colors[c])
-      }
-
-    })
-
-
-    deletor.addEventListener('click',()=>{
-      let savedThemes = localStorage.getItem("savedThemes")
-      if(!savedThemes) return; 
-      const current = JSON.parse(savedThemes).filter(theme=>theme.name !== props.name)
-      localStorage.setItem("savedThemes", JSON.stringify(current));
-      parent.remove();
-    })
-
-    parent.appendChild(toggler)
-    parent.appendChild(deletor)
-    savedThemesWrapper.appendChild(parent);
-
-
-
-  }
-
-
 
 
   const colorOptionsWrapper = document.querySelector("#colorOptions");
@@ -346,7 +242,6 @@ window.addEventListener("DOMContentLoaded",()=>{
   //change color of columns as user changes the color input field values
   document.querySelectorAll(".coloroption").forEach(optionInput=>{
     const c = parseInt(optionInput.id.split("_").pop());
-
     optionInput.addEventListener("change",()=>{
       colors[c] = optionInput.value;
       for(let i = 0; i < columns.length; i++){
@@ -354,9 +249,6 @@ window.addEventListener("DOMContentLoaded",()=>{
           columns[i].column.material.color.set(colors[c])
         }
       }    
-          
-          
-      
     }) 
   })
 

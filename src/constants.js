@@ -6,12 +6,12 @@ export const TREBLE_HIGH_HZ = 20000;
 export const SPIN_SPEED = 2
 export const CENTRAL_RADIUS = 50;
 export const FFT_SIZE = 2048
-export const COLORS = ["#ff0000", "#00ff00", "#0000ff", "#ffff00", "#ff00ff", "#00ffff"];
+export const COLORS = ["#ff0000", "#00ff00", "#0000ff", "#ffff00", "#ff00ff", ""];
 
 var look = new Vector3(0,30,0)
 
 export const PERSPECTIVES = [
-    { icon: "👁️", cameraConfig: { position: [40,30,0], look} },
+    { icon: "👁️", cameraConfig: { position: [40,10,0], look} },
     { icon: "🕊️", cameraConfig: { position: [100,150,100], look}},
     { icon :"🔝", cameraConfig: { position: [0,150,0], look}}
 
