@@ -24,3 +24,5 @@ If you want to record the speaker output from your computer, use Google Chrome. 
 5. Open google chrome and go to the url output by your terminal after the commands in step 4.
 6. Enjoy the pretty colors!
 
+# For Hue Shifting Version
+[See Here](https://quasar_audio.web.app)
