@@ -25,4 +25,4 @@ If you want to record the speaker output from your computer, use Google Chrome. 
 6. Enjoy the pretty colors!
 
 # For Hue Shifting Version
-[See Here](https://quasar_audio.web.app)
+[See Here](https://quasar-audio.web.app)
